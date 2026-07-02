@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+
+motor
+pymongo
+
+httpx
+pymupdf
+python-docx
+
+sentence-transformers
+numpy
