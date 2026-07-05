@@ -58,10 +58,6 @@ MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/?retryWrites=true&w=
 MONGO_DB_NAME=social_learn_ai
 MONGO_VECTOR_INDEX_NAME=document_vector_index
 
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_BUCKET=documents
-
 EMBEDDING_MODEL=BAAI/bge-m3
 EMBEDDING_DIM=1024
 
@@ -83,6 +79,7 @@ Ghi chú:
 - `QWEN_MODEL` sẽ được service `ollama-pull` tự pull khi chạy compose.
 - `CHUNK_SIZE=900`: giới hạn tối đa mỗi chunk khoảng 900 từ.
 - `CHUNK_OVERLAP=120`: chunk sau lặp lại 120 từ cuối của chunk trước khi cần cắt tiếp.
+- API index nhận `file_url` trực tiếp từ BE. URL này nên là public URL hoặc signed URL có quyền download.
 
 ## MongoDB Vector Search Index
 
