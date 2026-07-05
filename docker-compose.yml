@@ -25,6 +25,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: social-learn-ollama
+    gpus: all
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -34,6 +35,8 @@ services:
   ollama-pull:
     image: ollama/ollama:latest
     container_name: social-learn-ollama-pull
+    env_file:
+      - .env
     environment:
       OLLAMA_HOST: http://ollama:11434
     depends_on:
@@ -45,9 +48,9 @@ services:
       until ollama list >/dev/null 2>&1; do
         sleep 3;
       done &&
-      echo 'Pulling Qwen model...' &&
-      ollama pull qwen3:1.7b &&
-      echo 'Qwen3-1.7B pulled successfully'
+      echo \"Pulling Qwen model: $${QWEN_MODEL}\" &&
+      ollama pull \"$${QWEN_MODEL}\" &&
+      echo \"Qwen model pulled successfully: $${QWEN_MODEL}\"
       "
     restart: "no"
 

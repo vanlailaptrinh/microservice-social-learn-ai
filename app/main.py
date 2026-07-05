@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -140,27 +141,76 @@ async def get_document_index_status(
         "error_message": job.get("error_message"),
     }
 
-def get_max_tokens(question: str) -> int:
-    q = question.lower()
-    long_keywords = [
+def get_answer_style(question: str) -> str:
+    q = question.strip().lower()
+    words = re.findall(r"\w+", q, flags=re.UNICODE)
+    word_count = len(words)
+
+    long_signals = [
         "phân tích chi tiết",
         "trình bày đầy đủ",
         "giải thích kỹ",
         "so sánh chi tiết",
         "tổng hợp chi tiết",
+        "liệt kê đầy đủ",
+        "analyze in detail",
+        "explain in detail",
+        "detailed comparison",
+        "comprehensive",
+        "in depth",
     ]
-    short_keywords = [
+
+    medium_signals = [
+        "so sánh",
+        "phân tích",
+        "giải thích",
+        "vì sao",
+        "tại sao",
+        "how",
+        "why",
+        "compare",
+        "explain",
+        "analyze",
+        "list",
+    ]
+
+    concise_signals = [
         "là gì",
         "ngắn gọn",
         "tóm tắt",
         "nội dung gì",
+        "ai là",
+        "khi nào",
+        "ở đâu",
+        "bao nhiêu",
+        "define",
+        "briefly",
+        "summary",
+        "summarize",
     ]
 
-    if any(k in q for k in long_keywords):
-        return 1200
-    if any(k in q for k in short_keywords):
-        return 500
-    return 700
+    if any(k in q for k in long_signals):
+        return "detailed"
+
+    if any(k in q for k in concise_signals):
+        return "concise"
+
+    if word_count <= 8 and not any(k in q for k in medium_signals):
+        return "concise"
+
+    if any(k in q for k in medium_signals):
+        return "balanced"
+
+    return "balanced"
+
+
+def get_max_tokens(question: str) -> int:
+    style = get_answer_style(question)
+    if style == "detailed":
+        return 900
+    if style == "concise":
+        return 220
+    return 500
 
 @app.post("/api/v1/documents/summary", response_model=SummaryJobResponse)
 async def summarize_document(
@@ -318,14 +368,16 @@ async def chat(request: ChatRequest) -> ChatResponse:
             citations=[],
         )
 
-    prompt = build_chat_prompt(request.question, chunks)
+    answer_style = get_answer_style(request.question)
+    prompt = build_chat_prompt(request.question, chunks, answer_style=answer_style)
     max_tokens = get_max_tokens(request.question)
 
     try:
         answer = await qwen_client.generate(
             prompt,
             max_new_tokens=max_tokens,
-            temperature=0.2,
+            temperature=0.0,
+            require_vietnamese=True,
         )
     except Exception as e:
         logger.exception("LLM generate failed")

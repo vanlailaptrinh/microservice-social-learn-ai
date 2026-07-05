@@ -16,6 +16,7 @@ from app.config import settings
 from app.db import mongo
 from app.parsers.pdf_parser import parse_pdf
 from app.parsers.docx_parser import parse_docx
+from app.parsers.image_parser import parse_image
 from app.rag.chunker import chunk_pages
 from app.rag.embedder import embedder
 from app.rag.prompt import build_summary_prompt, build_final_summary_prompt
@@ -247,6 +248,9 @@ class DocumentWorker:
         if ft == "docx":
             return await run_in_threadpool(parse_docx, file_path)
 
+        if ft in {"jpg", "jpeg", "png", "webp"}:
+            return await run_in_threadpool(parse_image, file_path)
+
         raise ValueError(f"Unsupported file type: {file_type}")
 
     async def _summarize_chunks(self, chunks: List[dict]) -> str:
@@ -266,7 +270,8 @@ class DocumentWorker:
             summary = await qwen_client.generate(
                 prompt,
                 max_new_tokens=700,
-                temperature=0.2,
+                temperature=0.0,
+                require_vietnamese=True,
             )
             partial_summaries.append(summary)
 
@@ -277,7 +282,8 @@ class DocumentWorker:
         return await qwen_client.generate(
             final_prompt,
             max_new_tokens=1000,
-            temperature=0.2,
+            temperature=0.0,
+            require_vietnamese=True,
         )
 
 

@@ -13,6 +13,10 @@ from pydantic import BaseModel, Field, field_validator
 class FileType(str, Enum):
     PDF = "pdf"
     DOCX = "docx"
+    JPG = "jpg"
+    JPEG = "jpeg"
+    PNG = "png"
+    WEBP = "webp"
 
 
 class JobType(str, Enum):
